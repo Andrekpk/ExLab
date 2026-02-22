@@ -11,11 +11,10 @@
     header { text-align:center; position:relative; padding:20px 0 10px; }
     .logo { width:60px; height:60px; border-radius:50%; margin-bottom:8px; box-shadow:0 4px 12px rgba(0,0,0,0.1); border:3px solid #fff; }
     h1 { color:#2563eb; font-size:1.8em; }
-    h2 { color:#64748b; font-size:1.1em; margin-top:4px; }
     .add-btn { position:absolute; top:20px; right:20px; background:#2563eb; color:white; width:48px; height:48px; border:none; border-radius:50%; font-size:32px; line-height:40px; cursor:pointer; box-shadow:0 4px 12px rgba(37,99,235,0.4); }
-    
-    .empty-state { text-align:center; padding:100px 20px; color:#64748b; font-size:17px; }
-    .empty-state p { margin-bottom:20px; }
+
+    .pre-card { background:white; border-radius:16px; padding:18px; box-shadow:0 4px 12px rgba(0,0,0,0.08); margin-bottom:20px; cursor:pointer; }
+    .pre-card h3 { color:#1e2937; margin-bottom:6px; }
 
     #months-grid { display:grid; grid-template-columns:repeat(auto-fit, minmax(260px,1fr)); gap:15px; }
     .card { background:white; border-radius:16px; padding:18px; box-shadow:0 4px 12px rgba(0,0,0,0.08); cursor:pointer; }
@@ -33,12 +32,13 @@
   <header>
     <img src="logo.png" alt="Ex Lab" class="logo">
     <h1>Ex Lab</h1>
-    <h2>Seus exames por mês</h2>
     <button class="add-btn" onclick="showModal()">+</button>
   </header>
 
-  <div id="empty-state" class="empty-state">
-    <p>Você ainda não tem nenhuma pasta.</p>
+  <!-- Card pré-criado -->
+  <div class="pre-card" onclick="alert('📂 Fevereiro 2026 - 0 itens\n\nClique para abrir a pasta')">
+    <h3>Fevereiro 2026</h3>
+    <p style="color:#64748b;">0 itens</p>
   </div>
 
   <main id="months-grid"></main>
@@ -79,17 +79,7 @@
 
     function render() {
       const grid = document.getElementById('months-grid');
-      const empty = document.getElementById('empty-state');
       grid.innerHTML = '';
-
-      if (Object.keys(exams).length === 0) {
-        empty.style.display = 'block';
-        grid.style.display = 'none';
-        return;
-      }
-
-      empty.style.display = 'none';
-      grid.style.display = 'grid';
 
       Object.keys(exams).sort().reverse().forEach(key => {
         const [year, month] = key.split('-');
