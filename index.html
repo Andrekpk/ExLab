@@ -9,22 +9,22 @@
 </head>
 <body>
   <header>
-    <h1>📸 Ex Lab</h1>
+    <img src="logo.png" alt="Ex Lab" class="logo">
+    <h1>Ex Lab</h1>
     <h2>Seus exames por mês</h2>
   </header>
 
   <main id="months-grid">
-    <!-- Cards serão gerados pelo JS -->
+    <!-- Cards serão gerados automaticamente -->
   </main>
 
   <button id="add-btn" class="fab">+</button>
 
-  <!-- Modal simples -->
   <div id="modal" class="modal">
     <div class="modal-content">
-      <h3>Adicionar no mês atual</h3>
+      <h3>Adicionar exame</h3>
       <button onclick="addItem('photo')">📸 Foto do laudo de papel</button>
-      <button onclick="addItem('gallery')">🖼️ Galeria</button>
+      <button onclick="addItem('gallery')">🖼️ Da galeria</button>
       <button onclick="addItem('pdf')">📄 PDF</button>
       <button onclick="closeModal()">Cancelar</button>
     </div>
