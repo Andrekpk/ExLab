@@ -5,33 +5,47 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Ex Lab</title>
   <link rel="manifest" href="manifest.json">
-  <link rel="stylesheet" href="style.css?v=7">
+  <link rel="stylesheet" href="style.css?v=10">
 </head>
 <body>
   <header>
     <img src="logo.png" alt="Ex Lab" class="logo">
     <h1>Ex Lab</h1>
     <h2>Seus exames por mês</h2>
-
-    <!-- Seletor rápido no topo -->
-    <div class="quick-create">
-      <select id="month-select">
-        <option value="01">01</option><option value="02">02</option><option value="03">03</option>
-        <option value="04">04</option><option value="05">05</option><option value="06">06</option>
-        <option value="07">07</option><option value="08">08</option><option value="09">09</option>
-        <option value="10">10</option><option value="11">11</option><option value="12">12</option>
-      </select>
-      <input type="number" id="year-input" value="2026" min="2020" max="2035">
-      <button onclick="createQuickFolder()">Criar Pasta</button>
-    </div>
+    <button onclick="showNewFolderModal()" class="add-btn">+</button>
   </header>
 
   <div id="empty-state" class="empty-state">
     <p>Você ainda não tem nenhuma pasta.</p>
-    <p style="font-size:14px; margin-top:10px;">Use o seletor acima para criar a primeira pasta.</p>
   </div>
 
   <main id="months-grid" class="hidden"></main>
+
+  <!-- Modal Nova Pasta -->
+  <div id="new-folder-modal" class="modal">
+    <div class="modal-content">
+      <h3>Nova Pasta</h3>
+      <label>Mês</label>
+      <select id="month-select">
+        <option value="01">01 - Janeiro</option>
+        <option value="02">02 - Fevereiro</option>
+        <option value="03">03 - Março</option>
+        <option value="04">04 - Abril</option>
+        <option value="05">05 - Maio</option>
+        <option value="06">06 - Junho</option>
+        <option value="07">07 - Julho</option>
+        <option value="08">08 - Agosto</option>
+        <option value="09">09 - Setembro</option>
+        <option value="10">10 - Outubro</option>
+        <option value="11">11 - Novembro</option>
+        <option value="12">12 - Dezembro</option>
+      </select>
+      <label>Ano</label>
+      <input type="number" id="year-input" value="2026" min="2020" max="2035">
+      <button onclick="createNewFolder()" class="primary-btn">Criar Pasta</button>
+      <button onclick="closeNewFolderModal()">Cancelar</button>
+    </div>
+  </div>
 
   <script src="app.js"></script>
 </body>
