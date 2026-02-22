@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Ex Lab</title>
   <link rel="manifest" href="manifest.json">
-  <link rel="stylesheet" href="style.css?v=3">   <!-- v=3 força atualização -->
+  <link rel="stylesheet" href="style.css?v=5">
 </head>
 <body>
   <header>
@@ -14,17 +14,41 @@
     <h2>Seus exames por mês</h2>
   </header>
 
-  <main id="months-grid"></main>
+  <div id="empty-state" class="empty-state">
+    <p>Você ainda não tem nenhuma pasta.</p>
+    <button onclick="showNewFolderModal()" class="big-btn">+ Adicionar Pasta</button>
+  </div>
 
-  <button id="add-btn" class="fab">+</button>
+  <main id="months-grid" class="hidden"></main>
 
-  <div id="modal" class="modal">
+  <button id="add-folder-btn" class="fab" onclick="showNewFolderModal()">+ Pasta</button>
+
+  <!-- Modal Nova Pasta -->
+  <div id="new-folder-modal" class="modal">
     <div class="modal-content">
-      <h3>Adicionar exame</h3>
-      <button onclick="addItem('photo')">📸 Foto do laudo de papel</button>
-      <button onclick="addItem('gallery')">🖼️ Da galeria</button>
-      <button onclick="addItem('pdf')">📄 PDF</button>
-      <button onclick="closeModal()">Cancelar</button>
+      <h3>Nova Pasta</h3>
+      
+      <label>Ano</label>
+      <input type="number" id="year-input" value="2026" min="2020" max="2030" style="width:100%; padding:10px; margin:8px 0; border-radius:8px; border:1px solid #ccc;">
+
+      <label>Mês</label>
+      <select id="month-select" style="width:100%; padding:10px; margin:8px 0; border-radius:8px; border:1px solid #ccc;">
+        <option value="01">Janeiro</option>
+        <option value="02">Fevereiro</option>
+        <option value="03">Março</option>
+        <option value="04">Abril</option>
+        <option value="05">Maio</option>
+        <option value="06">Junho</option>
+        <option value="07">Julho</option>
+        <option value="08">Agosto</option>
+        <option value="09">Setembro</option>
+        <option value="10">Outubro</option>
+        <option value="11">Novembro</option>
+        <option value="12">Dezembro</option>
+      </select>
+
+      <button onclick="createNewFolder()" class="primary-btn">Criar Pasta</button>
+      <button onclick="closeNewFolderModal()">Cancelar</button>
     </div>
   </div>
 
