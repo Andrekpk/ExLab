@@ -35,12 +35,21 @@ function renderGrid() {
   });
 }
 
-function createQuickFolder() {
+function showNewFolderModal() {
+  document.getElementById('new-folder-modal').style.display = 'flex';
+}
+
+function closeNewFolderModal() {
+  document.getElementById('new-folder-modal').style.display = 'none';
+}
+
+function createNewFolder() {
   const month = document.getElementById('month-select').value;
   const year = document.getElementById('year-input').value;
   const key = `${year}-${month}`;
   if (!exams[key]) exams[key] = [];
   save();
+  closeNewFolderModal();
 }
 
 renderGrid();
