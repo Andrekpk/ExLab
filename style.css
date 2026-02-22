@@ -1,26 +1,30 @@
+.quick-create {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  justify-content: flex-start;
+  margin-top: 15px;
+  padding: 0 10px;
+}
+
+.quick-create select, .quick-create input, .quick-create button {
+  padding: 10px;
+  border-radius: 8px;
+  border: 1px solid #cbd5e1;
+  font-size: 15px;
+}
+
+.quick-create button {
+  background: #2563eb;
+  color: white;
+  border: none;
+  cursor: pointer;
+  padding: 10px 16px;
+}
+
 .empty-state {
   text-align: center;
-  padding: 60px 20px;
+  padding: 80px 20px 40px;
   color: #64748b;
-}
-
-.big-btn {
-  background: #2563eb;
-  color: white;
-  border: none;
-  padding: 16px 32px;
-  font-size: 18px;
-  border-radius: 12px;
-  margin-top: 20px;
-}
-
-.primary-btn {
-  background: #2563eb;
-  color: white;
-  border: none;
-  padding: 14px;
   font-size: 16px;
-  border-radius: 12px;
-  width: 100%;
-  margin: 15px 0 8px 0;
 }
