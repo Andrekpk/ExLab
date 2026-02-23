@@ -8,153 +8,129 @@
   <style>
     * { margin:0; padding:0; box-sizing:border-box; }
     body { font-family: Arial, sans-serif; background:#f8fafc; padding:15px; }
-    header { text-align:center; position:relative; padding:20px 0 10px; }
-    .logo { width:60px; height:60px; border-radius:50%; margin-bottom:8px; box-shadow:0 4px 12px rgba(0,0,0,0.1); border:3px solid #fff; }
-    h1 { color:#2563eb; font-size:1.8em; }
-    .add-btn { position:absolute; top:20px; right:20px; background:#2563eb; color:white; width:48px; height:48px; border:none; border-radius:50%; font-size:32px; line-height:40px; cursor:pointer; box-shadow:0 4px 12px rgba(37,99,235,0.4); }
+    header { text-align:center; padding:25px 0 15px; }
+    .logo { width:75px; height:75px; border-radius:50%; margin-bottom:10px; box-shadow:0 4px 15px rgba(0,0,0,0.1); }
+    h1 { color:#2563eb; font-size:1.9em; }
 
-    .card { background:white; border-radius:16px; padding:18px; box-shadow:0 4px 12px rgba(0,0,0,0.08); cursor:pointer; margin-bottom:15px; }
-    .card h3 { color:#1e2937; margin-bottom:6px; }
-    .thumbnails { display:flex; gap:6px; margin-top:10px; }
-    .thumb { width:38px; height:38px; border-radius:8px; background:#f1f5f9; display:flex; align-items:center; justify-content:center; font-size:18px; border:1px solid #e2e8f0; }
+    .buttons { display:flex; flex-direction:column; gap:14px; margin:30px 0; }
+    .btn { padding:22px; font-size:18px; border-radius:16px; border:none; color:white; font-weight:600; cursor:pointer; box-shadow:0 4px 15px rgba(0,0,0,0.1); }
+    .btn-photo { background:#ef4444; }
+    .btn-gallery { background:#3b82f6; }
+    .btn-pdf { background:#8b5cf6; }
 
-    #folder-view { display:none; }
-    #folder-grid { display:grid; grid-template-columns:repeat(auto-fit, minmax(110px,1fr)); gap:12px; }
-    .item { width:100%; aspect-ratio:1/1; border-radius:12px; overflow:hidden; border:1px solid #e2e8f0; background:#f8fafc; display:flex; align-items:center; justify-content:center; font-size:20px; }
-
-    .modal { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.7); align-items:center; justify-content:center; z-index:1000; }
-    .modal-content { background:white; width:90%; max-width:340px; border-radius:16px; padding:25px; position:relative; text-align:center; }
-    .close { position:absolute; top:15px; right:15px; font-size:28px; cursor:pointer; color:#64748b; }
-    .modal-content select, .modal-content input { width:100%; padding:12px; margin:8px 0; border-radius:10px; border:1px solid #cbd5e1; font-size:16px; }
-    .primary-btn { background:#2563eb; color:white; border:none; padding:14px; margin-top:20px; border-radius:12px; width:100%; font-size:16px; cursor:pointer; }
+    .list { margin-top:10px; }
+    .item { background:white; border-radius:14px; padding:16px; margin-bottom:12px; box-shadow:0 3px 10px rgba(0,0,0,0.07); display:flex; align-items:center; gap:15px; cursor:pointer; }
+    .item-icon { font-size:32px; width:50px; }
+    .item-info h3 { margin:0; font-size:1.1em; }
+    .item-info p { margin:4px 0 0; color:#64748b; font-size:0.95em; }
   </style>
 </head>
 <body>
   <header>
     <img src="logo.png" alt="Ex Lab" class="logo">
     <h1>Ex Lab</h1>
-    <button class="add-btn" onclick="showModal()">+</button>
   </header>
 
-  <!-- Card pré-criado -->
-  <div class="card" onclick="openFolder('2026-02')">
-    <h3>Fevereiro 2026</h3>
-    <p style="color:#64748b;">0 itens</p>
+  <div class="buttons">
+    <button class="btn btn-photo" onclick="addItem('photo')">📸 Tirar Foto</button>
+    <button class="btn btn-gallery" onclick="addItem('gallery')">🖼️ Carregar Imagem</button>
+    <button class="btn btn-pdf" onclick="addItem('pdf')">📄 Carregar PDF</button>
   </div>
 
-  <main id="months-grid"></main>
+  <div id="list"></div>
 
-  <!-- Tela da pasta aberta -->
-  <div id="folder-view">
-    <button onclick="backToHome()" style="margin-bottom:15px; background:none; border:none; color:#2563eb; font-size:18px;">← Voltar</button>
-    <h2 id="folder-title">Fevereiro 2026</h2>
-    <div id="folder-grid"></div>
-  </div>
-
-  <!-- Modal Nova Pasta -->
-  <div id="modal" class="modal">
-    <div class="modal-content">
-      <span class="close" onclick="closeModal()">✕</span>
-      <h3>Nova Pasta</h3>
-      <label>Mês</label>
-      <select id="month-select">
-        <option value="01">01 - Janeiro</option>
-        <option value="02">02 - Fevereiro</option>
-        <option value="03">03 - Março</option>
-        <option value="04">04 - Abril</option>
-        <option value="05">05 - Maio</option>
-        <option value="06">06 - Junho</option>
-        <option value="07">07 - Julho</option>
-        <option value="08">08 - Agosto</option>
-        <option value="09">09 - Setembro</option>
-        <option value="10">10 - Outubro</option>
-        <option value="11">11 - Novembro</option>
-        <option value="12">12 - Dezembro</option>
+  <!-- Modal para escolher/editar mês e ano -->
+  <div id="modal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.7); align-items:center; justify-content:center;">
+    <div style="background:white; width:90%; max-width:340px; border-radius:16px; padding:25px; text-align:center;">
+      <h3>Quando foi este exame?</h3>
+      <select id="modal-month" style="width:100%; padding:14px; margin:12px 0; border-radius:12px;">
+        <option value="01">Janeiro</option>
+        <option value="02">Fevereiro</option>
+        <option value="03">Março</option>
+        <option value="04">Abril</option>
+        <option value="05">Maio</option>
+        <option value="06">Junho</option>
+        <option value="07">Julho</option>
+        <option value="08">Agosto</option>
+        <option value="09">Setembro</option>
+        <option value="10">Outubro</option>
+        <option value="11">Novembro</option>
+        <option value="12">Dezembro</option>
       </select>
-      <label>Ano</label>
-      <select id="year-select">
-        <script>
-          for(let y=2000; y<=2035; y++) {
-            document.write(`<option value="${y}" ${y===2026 ? 'selected' : ''}>${y}</option>`);
-          }
-        </script>
+      <select id="modal-year" style="width:100%; padding:14px; margin:12px 0; border-radius:12px;">
+        <!-- Preenchido com JS -->
       </select>
-      <button class="primary-btn" onclick="createFolder()">✅ Certo</button>
+      <button onclick="saveItem()" style="width:100%; padding:16px; background:#2563eb; color:white; border:none; border-radius:12px; margin-top:20px;">Salvar</button>
+      <button onclick="cancelModal()" style="width:100%; padding:16px; background:#e2e8f0; border:none; border-radius:12px; margin-top:8px;">Cancelar</button>
     </div>
   </div>
 
   <script>
-    let exams = JSON.parse(localStorage.getItem('exams')) || {};
-    let currentFolderKey = null;
+    let items = JSON.parse(localStorage.getItem('exlab_items')) || [];
 
-    function save() {
-      localStorage.setItem('exams', JSON.stringify(exams));
-      renderHome();
+    function saveItems() {
+      localStorage.setItem('exlab_items', JSON.stringify(items));
+      renderList();
     }
 
-    function renderHome() {
-      const grid = document.getElementById('months-grid');
-      grid.innerHTML = '';
+    function renderList() {
+      const container = document.getElementById('list');
+      container.innerHTML = '';
 
-      Object.keys(exams).sort().reverse().forEach(key => {
-        const [year, month] = key.split('-');
-        const monthName = new Date(year, month-1).toLocaleString('pt-BR', { month: 'long' });
-        const count = exams[key].length;
+      items.sort((a,b) => new Date(b.date) - new Date(a.date));
 
-        const card = document.createElement('div');
-        card.className = 'card';
-        card.innerHTML = `<h3>${monthName.charAt(0).toUpperCase() + monthName.slice(1)} ${year}</h3><p style="color:#64748b;">${count} itens</p>`;
-        card.onclick = () => openFolder(key);
-        grid.appendChild(card);
-      });
-    }
-
-    function openFolder(key) {
-      currentFolderKey = key;
-      const [year, month] = key.split('-');
-      const monthName = new Date(year, month-1).toLocaleString('pt-BR', { month: 'long' });
-
-      document.getElementById('home-view').style.display = 'none';
-      document.getElementById('folder-view').style.display = 'block';
-      document.getElementById('folder-title').textContent = `${monthName.charAt(0).toUpperCase() + monthName.slice(1)} ${year}`;
-
-      const grid = document.getElementById('folder-grid');
-      grid.innerHTML = '';
-
-      (exams[key] || []).forEach(item => {
+      items.forEach(item => {
         const div = document.createElement('div');
         div.className = 'item';
-        div.innerHTML = item.type === 'pdf' ? '📄' : '📸';
-        grid.appendChild(div);
+        const monthName = new Date(item.date).toLocaleString('pt-BR', { month: 'long', year: 'numeric' });
+        div.innerHTML = `
+          <div class="item-icon">${item.type === 'pdf' ? '📄' : '📸'}</div>
+          <div class="item-info">
+            <h3>${item.type === 'pdf' ? 'PDF' : 'Foto'}</h3>
+            <p>${monthName}</p>
+          </div>
+        `;
+        container.appendChild(div);
       });
     }
 
-    function backToHome() {
-      document.getElementById('folder-view').style.display = 'none';
-      document.getElementById('home-view').style.display = 'block';
+    let pendingType = null;
+
+    function addItem(type) {
+      pendingType = type;
+      const modal = document.getElementById('modal');
+      const yearSelect = document.getElementById('modal-year');
+      yearSelect.innerHTML = '';
+      for(let y=2000; y<=2035; y++) {
+        const opt = document.createElement('option');
+        opt.value = y;
+        opt.textContent = y;
+        if(y === 2026) opt.selected = true;
+        yearSelect.appendChild(opt);
+      }
+      modal.style.display = 'flex';
     }
 
-    function showModal() {
-      document.getElementById('modal').style.display = 'flex';
+    function saveItem() {
+      const month = document.getElementById('modal-month').value;
+      const year = document.getElementById('modal-year').value;
+      const dateStr = `${year}-${month}-01`;
+
+      items.push({
+        type: pendingType,
+        date: dateStr
+      });
+
+      saveItems();
+      cancelModal();
     }
 
-    function closeModal() {
+    function cancelModal() {
       document.getElementById('modal').style.display = 'none';
     }
 
-    function createFolder() {
-      const month = document.getElementById('month-select').value;
-      const year = document.getElementById('year-select').value;
-      const key = `${year}-${month}`;
-      if (!exams[key]) exams[key] = [];
-      save();
-      closeModal();
-      openFolder(key);
-    }
-
-    // Inicialização
-    document.getElementById('home-view').style.display = 'block';
-    renderHome();
+    // Inicializa
+    renderList();
   </script>
 </body>
 </html>
