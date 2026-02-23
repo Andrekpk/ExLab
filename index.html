@@ -19,9 +19,10 @@
     .btn-pdf { background:#8b5cf6; }
 
     .list { margin-top:10px; }
-    .item { background:white; border-radius:14px; padding:16px; margin-bottom:12px; box-shadow:0 3px 10px rgba(0,0,0,0.07); }
+    .item { background:white; border-radius:14px; padding:16px; margin-bottom:12px; box-shadow:0 3px 10px rgba(0,0,0,0.07); cursor:pointer; }
     .item-header { display:flex; align-items:center; gap:15px; }
-    .item-icon { font-size:32px; width:50px; }
+    .item-icon { width:60px; height:60px; border-radius:10px; overflow:hidden; background:#f1f5f9; display:flex; align-items:center; justify-content:center; font-size:28px; }
+    .item-icon img { width:100%; height:100%; object-fit:cover; }
     .item-info h3 { margin:0; font-size:1.1em; }
     .item-date { color:#2563eb; margin-top:6px; font-size:0.95em; cursor:pointer; text-decoration:underline; }
 
@@ -37,12 +38,16 @@
   </header>
 
   <div class="buttons">
-    <button class="btn btn-photo" onclick="addItem('photo')">📸 Tirar Foto</button>
-    <button class="btn btn-gallery" onclick="addItem('gallery')">🖼️ Carregar Imagem</button>
-    <button class="btn btn-pdf" onclick="addItem('pdf')">📄 Carregar PDF</button>
+    <button class="btn btn-photo" onclick="triggerCamera()">📸 Tirar Foto</button>
+    <button class="btn btn-gallery" onclick="triggerGallery()">🖼️ Carregar Imagem</button>
+    <button class="btn btn-pdf" onclick="triggerPDF()">📄 Carregar PDF</button>
   </div>
 
   <div id="list" class="list"></div>
+
+  <input type="file" id="camera-input" accept="image/*" capture="camera" style="display:none;">
+  <input type="file" id="gallery-input" accept="image/*" style="display:none;">
+  <input type="file" id="pdf-input" accept=".pdf" style="display:none;">
 
   <script>
     let items = JSON.parse(localStorage.getItem('exlab_items')) || [];
@@ -56,24 +61,25 @@
       const container = document.getElementById('list');
       container.innerHTML = '';
 
-      // Ordenação forte: mais recente primeiro
       items.sort((a, b) => new Date(b.date) - new Date(a.date));
 
-      items.forEach(item => {
+      items.forEach((item, index) => {
         const div = document.createElement('div');
         div.className = 'item';
         const monthName = new Date(item.date).toLocaleString('pt-BR', { month: 'long', year: 'numeric' });
 
+        let iconHTML = item.type === 'pdf' ? '📄' : `<img src="${item.preview}" style="width:100%;height:100%;object-fit:cover;">`;
+
         div.innerHTML = `
           <div class="item-header">
-            <div class="item-icon">${item.type === 'pdf' ? '📄' : '📸'}</div>
+            <div class="item-icon">${iconHTML}</div>
             <div class="item-info">
               <h3>${item.type === 'pdf' ? 'PDF' : 'Foto'}</h3>
-              <div class="item-date" onclick="toggleEdit('${item.id}', this)">${monthName}</div>
+              <div class="item-date" onclick="toggleEdit(${index}, this)">${monthName}</div>
             </div>
           </div>
-          <div class="edit-inline" id="edit-${item.id}">
-            <select id="m-${item.id}">
+          <div class="edit-inline" id="edit-${index}">
+            <select id="m-${index}">
               <option value="01">Janeiro</option><option value="02">Fevereiro</option>
               <option value="03">Março</option><option value="04">Abril</option>
               <option value="05">Maio</option><option value="06">Junho</option>
@@ -81,13 +87,12 @@
               <option value="09">Setembro</option><option value="10">Outubro</option>
               <option value="11">Novembro</option><option value="12">Dezembro</option>
             </select>
-            <select id="y-${item.id}"></select>
-            <button class="save-btn" onclick="saveEdit('${item.id}')">Salvar Data</button>
+            <select id="y-${index}"></select>
+            <button class="save-btn" onclick="saveEdit(${index})">Salvar Data</button>
           </div>
         `;
 
-        // Preenche anos
-        const ySelect = div.querySelector(`#y-${item.id}`);
+        const ySelect = div.querySelector(`#y-${index}`);
         for(let y=2000; y<=2035; y++) {
           const opt = document.createElement('option');
           opt.value = y;
@@ -100,33 +105,53 @@
       });
     }
 
-    function toggleEdit(id, element) {
-      const editDiv = document.getElementById(`edit-${id}`);
+    function toggleEdit(index, element) {
+      const editDiv = document.getElementById(`edit-${index}`);
       editDiv.style.display = editDiv.style.display === 'block' ? 'none' : 'block';
     }
 
-    function saveEdit(id) {
-      const item = items.find(i => i.id === id);
-      if (!item) return;
-
-      const month = document.getElementById(`m-${id}`).value;
-      const year = document.getElementById(`y-${id}`).value;
-      item.date = `${year}-${month}-01`;
+    function saveEdit(index) {
+      const month = document.getElementById(`m-${index}`).value;
+      const year = document.getElementById(`y-${index}`).value;
+      items[index].date = `${year}-${month}-01`;
       saveItems();
     }
 
-    function addItem(type) {
-      const now = new Date();
-      const month = String(now.getMonth() + 1).padStart(2, '0');
-      const year = now.getFullYear();
+    // Triggers reais
+    function triggerCamera() {
+      document.getElementById('camera-input').click();
+    }
+    function triggerGallery() {
+      document.getElementById('gallery-input').click();
+    }
+    function triggerPDF() {
+      document.getElementById('pdf-input').click();
+    }
 
-      items.push({
-        id: Date.now().toString(),   // ID único
-        type: type,
-        date: `${year}-${month}-01`
-      });
+    // Handlers
+    document.getElementById('camera-input').onchange = e => handleFile(e.target.files[0], 'photo');
+    document.getElementById('gallery-input').onchange = e => handleFile(e.target.files[0], 'photo');
+    document.getElementById('pdf-input').onchange = e => handleFile(e.target.files[0], 'pdf');
 
-      saveItems();
+    function handleFile(file, type) {
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = function(ev) {
+        const now = new Date();
+        const month = String(now.getMonth() + 1).padStart(2, '0');
+        const year = now.getFullYear();
+
+        items.push({
+          id: Date.now(),
+          type: type,
+          date: `${year}-${month}-01`,
+          preview: ev.target.result   // base64 para thumbnail
+        });
+
+        saveItems();
+      };
+      reader.readAsDataURL(file);
     }
 
     renderList();
