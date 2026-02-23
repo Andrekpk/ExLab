@@ -28,11 +28,11 @@
     /* Tela detalhada */
     #detail-view { display:none; }
     #detail-grid { display:grid; grid-template-columns:repeat(auto-fit, minmax(140px,1fr)); gap:12px; }
-    .detail-item { background:white; border-radius:14px; padding:10px; box-shadow:0 3px 10px rgba(0,0,0,0.08); position:relative; }
-    .detail-item img, .detail-item .pdf-icon { width:100%; aspect-ratio:1/1; object-fit:cover; border-radius:10px; }
-    .pdf-icon { font-size:60px; display:flex; align-items:center; justify-content:center; background:#f1f5f9; }
-    .delete-btn { position:absolute; top:8px; right:8px; background:#ef4444; color:white; width:28px; height:28px; border-radius:50%; border:none; font-size:16px; cursor:pointer; }
-    .select-box { position:absolute; top:8px; left:8px; width:24px; height:24px; }
+    .detail-item { background:white; border-radius:14px; padding:8px; box-shadow:0 3px 10px rgba(0,0,0,0.08); position:relative; }
+    .detail-item .thumb { width:100%; aspect-ratio:1/1; border-radius:10px; overflow:hidden; cursor:pointer; }
+    .detail-item .thumb img { width:100%; height:100%; object-fit:cover; }
+    .detail-item .pdf-icon { width:100%; aspect-ratio:1/1; background:#f1f5f9; display:flex; align-items:center; justify-content:center; font-size:60px; border-radius:10px; }
+    .delete-x { position:absolute; top:8px; right:8px; background:#ef4444; color:white; width:28px; height:28px; border-radius:50%; border:none; font-size:18px; cursor:pointer; line-height:24px; }
 
     .share-bar { position:fixed; bottom:0; left:0; right:0; background:white; padding:15px; box-shadow:0 -4px 15px rgba(0,0,0,0.1); text-align:center; display:none; }
     .share-bar button { background:#25D366; color:white; border:none; padding:16px 30px; border-radius:12px; font-size:17px; width:90%; max-width:400px; }
@@ -133,25 +133,37 @@
         const div = document.createElement('div');
         div.className = 'detail-item';
         div.innerHTML = `
-          <input type="checkbox" class="select-box" onchange="toggleSelect('${item.id}', this.checked)">
-          <button class="delete-btn" onclick="deleteItem('${item.id}')">🗑️</button>
-          ${item.type === 'pdf' ? '<div class="pdf-icon">📄</div>' : (item.preview ? `<img src="${item.preview}">` : '📸')}
+          <button class="delete-x" onclick="deleteItem('${item.id}'); event.stopImmediatePropagation();">✕</button>
+          <div class="thumb" onclick="openFile('${item.id}')">
+            ${item.type === 'pdf' ? '<div class="pdf-icon">📄</div>' : (item.preview ? `<img src="${item.preview}">` : '📸')}
+          </div>
         `;
         grid.appendChild(div);
       });
-
-      updateShareBar();
     }
 
-    function toggleSelect(id, checked) {
-      if (checked) selectedItems.add(id);
-      else selectedItems.delete(id);
-      updateShareBar();
-    }
+    function openFile(id) {
+      const item = items.find(i => i.id === id);
+      if (!item) return;
 
-    function updateShareBar() {
-      const bar = document.getElementById('share-bar');
-      bar.style.display = selectedItems.size > 0 ? 'block' : 'none';
+      if (item.type === 'pdf') {
+        window.open(item.preview, '_blank');
+      } else {
+        const modal = document.createElement('div');
+        modal.style.position = 'fixed';
+        modal.style.top = '0';
+        modal.style.left = '0';
+        modal.style.width = '100%';
+        modal.style.height = '100%';
+        modal.style.background = 'rgba(0,0,0,0.95)';
+        modal.style.display = 'flex';
+        modal.style.alignItems = 'center';
+        modal.style.justifyContent = 'center';
+        modal.style.zIndex = '9999';
+        modal.innerHTML = `<img src="${item.preview}" style="max-width:95%; max-height:95%;">`;
+        modal.onclick = () => modal.remove();
+        document.body.appendChild(modal);
+      }
     }
 
     function deleteItem(id) {
@@ -160,13 +172,6 @@
         save();
         openMonth(currentMonthKey);
       }
-    }
-
-    function shareSelected() {
-      if (selectedItems.size === 0) return;
-      const text = `📋 Meus exames selecionados - ${selectedItems.size} arquivos\nEnviado pelo Ex Lab`;
-      const waLink = `https://wa.me/?text=${encodeURIComponent(text)}`;
-      window.open(waLink, '_blank');
     }
 
     function backToHome() {
