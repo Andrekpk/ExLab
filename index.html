@@ -40,7 +40,6 @@
   <div class="card" onclick="openFolder('2026-02')">
     <h3>Fevereiro 2026</h3>
     <p style="color:#64748b;">0 itens</p>
-    <div class="thumbnails" id="thumb-2026-02"></div>
   </div>
 
   <main id="months-grid"></main>
@@ -100,26 +99,11 @@
       Object.keys(exams).sort().reverse().forEach(key => {
         const [year, month] = key.split('-');
         const monthName = new Date(year, month-1).toLocaleString('pt-BR', { month: 'long' });
-        const items = exams[key] || [];
-        const count = items.length;
+        const count = exams[key].length;
 
         const card = document.createElement('div');
         card.className = 'card';
-        card.innerHTML = `
-          <h3>${monthName.charAt(0).toUpperCase() + monthName.slice(1)} ${year}</h3>
-          <p style="color:#64748b;">${count} itens</p>
-          <div class="thumbnails" id="thumb-${key}"></div>
-        `;
-
-        // Mini thumbnails
-        const thumbContainer = card.querySelector(`#thumb-${key}`);
-        items.slice(0,4).forEach(item => {
-          const t = document.createElement('div');
-          t.className = 'thumb';
-          t.textContent = item.type === 'pdf' ? '📄' : '📸';
-          thumbContainer.appendChild(t);
-        });
-
+        card.innerHTML = `<h3>${monthName.charAt(0).toUpperCase() + monthName.slice(1)} ${year}</h3><p style="color:#64748b;">${count} itens</p>`;
         card.onclick = () => openFolder(key);
         grid.appendChild(card);
       });
