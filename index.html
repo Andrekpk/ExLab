@@ -19,7 +19,7 @@
     .btn-pdf { background:#8b5cf6; }
 
     .list { margin-top:10px; }
-    .item { background:white; border-radius:14px; padding:16px; margin-bottom:12px; box-shadow:0 3px 10px rgba(0,0,0,0.07); cursor:pointer; }
+    .item { background:white; border-radius:14px; padding:16px; margin-bottom:12px; box-shadow:0 3px 10px rgba(0,0,0,0.07); }
     .item-header { display:flex; align-items:center; gap:15px; }
     .item-icon { font-size:32px; width:50px; }
     .item-info h3 { margin:0; font-size:1.1em; }
@@ -57,28 +57,23 @@
       container.innerHTML = '';
 
       // Ordenação forte: mais recente primeiro
-      items.sort((a, b) => {
-        const numA = parseInt(a.date.replace(/-/g, ''));
-        const numB = parseInt(b.date.replace(/-/g, ''));
-        return numB - numA;
-      });
+      items.sort((a, b) => new Date(b.date) - new Date(a.date));
 
-      items.forEach((item, index) => {
+      items.forEach(item => {
         const div = document.createElement('div');
         div.className = 'item';
-        const dateObj = new Date(item.date);
-        const monthName = dateObj.toLocaleString('pt-BR', { month: 'long', year: 'numeric' });
+        const monthName = new Date(item.date).toLocaleString('pt-BR', { month: 'long', year: 'numeric' });
 
         div.innerHTML = `
           <div class="item-header">
             <div class="item-icon">${item.type === 'pdf' ? '📄' : '📸'}</div>
             <div class="item-info">
               <h3>${item.type === 'pdf' ? 'PDF' : 'Foto'}</h3>
-              <div class="item-date" onclick="toggleEdit(${index}, this)">${monthName}</div>
+              <div class="item-date" onclick="toggleEdit('${item.id}', this)">${monthName}</div>
             </div>
           </div>
-          <div class="edit-inline" id="edit-${index}">
-            <select id="m-${index}">
+          <div class="edit-inline" id="edit-${item.id}">
+            <select id="m-${item.id}">
               <option value="01">Janeiro</option><option value="02">Fevereiro</option>
               <option value="03">Março</option><option value="04">Abril</option>
               <option value="05">Maio</option><option value="06">Junho</option>
@@ -86,51 +81,19 @@
               <option value="09">Setembro</option><option value="10">Outubro</option>
               <option value="11">Novembro</option><option value="12">Dezembro</option>
             </select>
-            <select id="y-${index}"></select>
-            <button class="save-btn" onclick="saveEdit(${index})">Salvar Data</button>
+            <select id="y-${item.id}"></select>
+            <button class="save-btn" onclick="saveEdit('${item.id}')">Salvar Data</button>
           </div>
         `;
 
         // Preenche anos
-        const ySelect = div.querySelector(`#y-${index}`);
+        const ySelect = div.querySelector(`#y-${item.id}`);
         for(let y=2000; y<=2035; y++) {
           const opt = document.createElement('option');
           opt.value = y;
           opt.textContent = y;
-          if(y === dateObj.getFullYear()) opt.selected = true;
+          if(y === new Date(item.date).getFullYear()) opt.selected = true;
           ySelect.appendChild(opt);
         }
 
-        container.appendChild(div);
-      });
-    }
-
-    function toggleEdit(index, element) {
-      const editDiv = document.getElementById(`edit-${index}`);
-      editDiv.style.display = editDiv.style.display === 'block' ? 'none' : 'block';
-    }
-
-    function saveEdit(index) {
-      const month = document.getElementById(`m-${index}`).value;
-      const year = document.getElementById(`y-${index}`).value;
-      items[index].date = `${year}-${month}-01`;
-      saveItems();
-    }
-
-    function addItem(type) {
-      const now = new Date();
-      const month = String(now.getMonth() + 1).padStart(2, '0');
-      const year = now.getFullYear();
-
-      items.push({
-        type: type,
-        date: `${year}-${month}-01`
-      });
-
-      saveItems();
-    }
-
-    renderList();
-  </script>
-</body>
-</html>
+        container.appendChild(div
