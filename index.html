@@ -9,11 +9,11 @@
     * { margin:0; padding:0; box-sizing:border-box; }
     body { font-family: Arial, sans-serif; background:#f8fafc; padding:15px; }
     header { text-align:center; padding:25px 0 15px; }
-    .logo { width:75px; height:75px; border-radius:50%; margin-bottom:10px; box-shadow:0 4px 15px rgba(0,0,0,0.1); }
+    .logo { width:80px; height:80px; border-radius:50%; margin-bottom:10px; box-shadow:0 4px 15px rgba(0,0,0,0.1); }
     h1 { color:#2563eb; font-size:1.9em; }
 
     .buttons { display:flex; flex-direction:column; gap:14px; margin:30px 0; }
-    .btn { padding:22px; font-size:18px; border-radius:16px; border:none; color:white; font-weight:600; cursor:pointer; box-shadow:0 4px 15px rgba(0,0,0,0.1); }
+    .btn { padding:22px; font-size:18px; border-radius:16px; border:none; color:white; font-weight:600; cursor:pointer; box-shadow:0 4px 15px rgba(0,0,0,0.1); text-align:center; }
     .btn-photo { background:#ef4444; }
     .btn-gallery { background:#3b82f6; }
     .btn-pdf { background:#8b5cf6; }
@@ -22,10 +22,9 @@
     .month-card { background:white; border-radius:16px; padding:18px; box-shadow:0 4px 12px rgba(0,0,0,0.08); }
     .month-card h3 { color:#1e2937; margin-bottom:8px; }
     .count { color:#64748b; margin-bottom:12px; }
-    .thumbnails { display:flex; gap:6px; margin-bottom:15px; flex-wrap:wrap; }
-    .thumb { width:45px; height:45px; border-radius:8px; overflow:hidden; border:1px solid #e2e8f0; }
+    .thumbnails { display:flex; gap:8px; flex-wrap:wrap; }
+    .thumb { width:55px; height:55px; border-radius:10px; overflow:hidden; border:1px solid #e2e8f0; cursor:pointer; }
     .thumb img { width:100%; height:100%; object-fit:cover; }
-    .share-btn { background:#25D366; color:white; border:none; padding:14px; border-radius:12px; width:100%; font-size:16px; cursor:pointer; margin-top:10px; }
   </style>
 </head>
 <body>
@@ -40,33 +39,31 @@
     <button class="btn btn-pdf" onclick="addItem('pdf')">📄 Carregar PDF</button>
   </div>
 
-  <div id="months-container" class="months"></div>
+  <div id="months" class="months"></div>
+
+  <input type="file" id="camera" accept="image/*" capture="camera" style="display:none;">
+  <input type="file" id="gallery" accept="image/*" style="display:none;">
+  <input type="file" id="pdf" accept=".pdf" style="display:none;">
 
   <script>
     let items = JSON.parse(localStorage.getItem('exlab_items')) || [];
 
-    function saveItems() {
+    function save() {
       localStorage.setItem('exlab_items', JSON.stringify(items));
-      renderMonths();
+      render();
     }
 
-    function getMonthKey(dateStr) {
-      return dateStr.substring(0,7); // "2026-02"
-    }
-
-    function renderMonths() {
-      const container = document.getElementById('months-container');
+    function render() {
+      const container = document.getElementById('months');
       container.innerHTML = '';
 
       const grouped = {};
-
       items.forEach(item => {
-        const key = getMonthKey(item.date);
+        const key = item.date.substring(0,7); // "2026-02"
         if (!grouped[key]) grouped[key] = [];
         grouped[key].push(item);
       });
 
-      // Ordena os meses do mais recente para o mais antigo
       Object.keys(grouped).sort().reverse().forEach(key => {
         const [year, monthNum] = key.split('-');
         const monthName = new Date(year, monthNum-1).toLocaleString('pt-BR', { month: 'long', year: 'numeric' });
@@ -75,60 +72,74 @@
         const card = document.createElement('div');
         card.className = 'month-card';
         card.innerHTML = `
-          <h3>${monthName.charAt(0).toUpperCase() + monthName.slice(1)}</h3>
-          <p class="count">${monthItems.length} itens</p>
+          <h3>${monthName}</h3>
+          <p class="count">${monthItems.length} arquivos</p>
           <div class="thumbnails">
-            ${monthItems.slice(0,6).map(item => `
-              <div class="thumb">
+            ${monthItems.slice(0,8).map(item => `
+              <div class="thumb" onclick="openFile('${item.preview || item.id}')">
                 ${item.type === 'pdf' ? '📄' : (item.preview ? `<img src="${item.preview}">` : '📸')}
               </div>
             `).join('')}
           </div>
-          <button class="share-btn" onclick="shareMonth('${key}')">📤 Compartilhar via WhatsApp</button>
         `;
         container.appendChild(card);
       });
-
-      if (Object.keys(grouped).length === 0) {
-        container.innerHTML = '<p style="text-align:center; color:#64748b; padding:80px 20px;">Nenhum exame ainda.<br>Use os botões acima para começar.</p>';
-      }
-    }
-
-    async function shareMonth(key) {
-      const monthItems = items.filter(item => getMonthKey(item.date) === key);
-      const [year, monthNum] = key.split('-');
-      const monthName = new Date(year, monthNum-1).toLocaleString('pt-BR', { month: 'long', year: 'numeric' });
-
-      const text = `📋 Meus exames de ${monthName}\nTotal: ${monthItems.length} arquivos\nEnviado pelo Ex Lab`;
-
-      try {
-        await navigator.share({
-          title: `Exames - ${monthName}`,
-          text: text
-        });
-      } catch (err) {
-        // Fallback para WhatsApp Web
-        const waLink = `https://wa.me/?text=${encodeURIComponent(text)}`;
-        window.open(waLink, '_blank');
-      }
     }
 
     function addItem(type) {
-      const now = new Date();
-      const month = String(now.getMonth() + 1).padStart(2, '0');
-      const year = now.getFullYear();
-
-      items.push({
-        id: Date.now().toString(),
-        type: type,
-        date: `${year}-${month}`,
-        preview: null
-      });
-
-      saveItems();
+      const input = document.getElementById(type === 'pdf' ? 'pdf' : type === 'photo' ? 'camera' : 'gallery');
+      input.click();
     }
 
-    renderMonths();
+    document.getElementById('camera').onchange = e => handleFile(e.target.files[0], 'photo');
+    document.getElementById('gallery').onchange = e => handleFile(e.target.files[0], 'photo');
+    document.getElementById('pdf').onchange = e => handleFile(e.target.files[0], 'pdf');
+
+    function handleFile(file, type) {
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = function(ev) {
+        const now = new Date();
+        const month = String(now.getMonth()+1).padStart(2,'0');
+        const year = now.getFullYear();
+
+        items.push({
+          id: Date.now().toString(),
+          type: type,
+          date: `${year}-${month}`,
+          preview: ev.target.result
+        });
+        save();
+      };
+      reader.readAsDataURL(file);
+    }
+
+    function openFile(preview) {
+      if (preview.startsWith('data:application/pdf')) {
+        window.open(preview, '_blank');
+      } else {
+        const img = new Image();
+        img.src = preview;
+        img.style.maxWidth = '100%';
+        const modal = document.createElement('div');
+        modal.style.position = 'fixed';
+        modal.style.top = '0';
+        modal.style.left = '0';
+        modal.style.width = '100%';
+        modal.style.height = '100%';
+        modal.style.background = 'rgba(0,0,0,0.95)';
+        modal.style.display = 'flex';
+        modal.style.alignItems = 'center';
+        modal.style.justifyContent = 'center';
+        modal.style.zIndex = '9999';
+        modal.innerHTML = `<img src="${preview}" style="max-width:95%; max-height:95%;">`;
+        modal.onclick = () => modal.remove();
+        document.body.appendChild(modal);
+      }
+    }
+
+    render();
   </script>
 </body>
 </html>
