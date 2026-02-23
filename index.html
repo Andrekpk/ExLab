@@ -32,7 +32,7 @@
     .detail-item .thumb { width:100%; aspect-ratio:1/1; border-radius:10px; overflow:hidden; cursor:pointer; }
     .detail-item .thumb img { width:100%; height:100%; object-fit:cover; }
     .detail-item .pdf-icon { width:100%; aspect-ratio:1/1; background:#f1f5f9; display:flex; align-items:center; justify-content:center; font-size:60px; border-radius:10px; }
-    .delete-x { position:absolute; top:8px; right:8px; background:rgba(239,68,68,0.85); color:white; width:24px; height:24px; border-radius:50%; border:none; font-size:14px; cursor:pointer; line-height:20px; }
+    .delete-x { position:absolute; top:8px; right:8px; background:#ef4444; color:white; width:28px; height:28px; border-radius:50%; border:none; font-size:18px; cursor:pointer; line-height:24px; }
   </style>
 </head>
 <body>
@@ -47,9 +47,11 @@
     <button class="btn btn-pdf" onclick="addItem('pdf')">📄 Carregar PDF</button>
   </div>
 
-  <div id="months" class="months"></div>
+  <div id="home-view">
+    <div id="months" class="months"></div>
+  </div>
 
-  <!-- Tela detalhada do mês -->
+  <!-- Tela detalhada -->
   <div id="detail-view">
     <button onclick="backToHome()" style="margin-bottom:15px; background:none; border:none; color:#2563eb; font-size:18px;">← Voltar</button>
     <h2 id="detail-title"></h2>
@@ -136,6 +138,7 @@
     function openFile(id) {
       const item = items.find(i => i.id === id);
       if (!item) return;
+
       if (item.type === 'pdf') {
         window.open(item.preview, '_blank');
       } else {
