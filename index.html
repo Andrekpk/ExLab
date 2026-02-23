@@ -19,14 +19,15 @@
     .btn-pdf { background:#8b5cf6; }
 
     .list { margin-top:10px; }
-    .item { background:white; border-radius:14px; padding:16px; margin-bottom:12px; box-shadow:0 3px 10px rgba(0,0,0,0.07); cursor:pointer; }
+    .item { background:white; border-radius:14px; padding:16px; margin-bottom:12px; box-shadow:0 3px 10px rgba(0,0,0,0.07); }
     .item-header { display:flex; align-items:center; gap:15px; }
     .item-icon { font-size:32px; width:50px; }
     .item-info h3 { margin:0; font-size:1.1em; }
-    .item-date { color:#64748b; margin-top:6px; font-size:0.95em; }
-    .edit-date { margin-top:8px; display:none; }
-    .edit-date select { width:48%; padding:8px; border-radius:8px; border:1px solid #cbd5e1; margin-right:4%; }
-    .save-date { background:#2563eb; color:white; border:none; padding:8px 16px; border-radius:8px; margin-top:8px; }
+    .item-date { color:#2563eb; margin-top:6px; font-size:0.95em; cursor:pointer; text-decoration:underline; }
+
+    .edit-inline { margin-top:10px; display:none; background:#f1f5f9; padding:12px; border-radius:10px; }
+    .edit-inline select { width:48%; padding:10px; margin:5px 2%; border-radius:8px; border:1px solid #cbd5e1; }
+    .save-btn { background:#2563eb; color:white; border:none; padding:8px 16px; border-radius:8px; margin-top:8px; width:100%; }
   </style>
 </head>
 <body>
@@ -61,15 +62,16 @@
         const div = document.createElement('div');
         div.className = 'item';
         const monthName = new Date(item.date).toLocaleString('pt-BR', { month: 'long', year: 'numeric' });
+
         div.innerHTML = `
           <div class="item-header">
             <div class="item-icon">${item.type === 'pdf' ? '📄' : '📸'}</div>
             <div class="item-info">
               <h3>${item.type === 'pdf' ? 'PDF' : 'Foto'}</h3>
-              <div class="item-date" onclick="toggleEdit(${index})">${monthName}</div>
+              <div class="item-date" onclick="toggleEdit(${index}, this)">${monthName}</div>
             </div>
           </div>
-          <div class="edit-date" id="edit-${index}">
+          <div class="edit-inline" id="edit-${index}">
             <select id="m-${index}">
               <option value="01">Janeiro</option><option value="02">Fevereiro</option>
               <option value="03">Março</option><option value="04">Abril</option>
@@ -78,27 +80,25 @@
               <option value="09">Setembro</option><option value="10">Outubro</option>
               <option value="11">Novembro</option><option value="12">Dezembro</option>
             </select>
-            <select id="y-${index}">
-              <!-- preenchido com JS -->
-            </select>
-            <button class="save-date" onclick="saveEdit(${index})">Salvar Data</button>
+            <select id="y-${index}"></select>
+            <button class="save-btn" onclick="saveEdit(${index})">Salvar Data</button>
           </div>
         `;
-        container.appendChild(div);
 
-        // Preenche ano
         const ySelect = div.querySelector(`#y-${index}`);
         for(let y=2000; y<=2035; y++) {
           const opt = document.createElement('option');
           opt.value = y;
           opt.textContent = y;
-          if(y === parseInt(item.date.split('-')[0])) opt.selected = true;
+          if(y === new Date(item.date).getFullYear()) opt.selected = true;
           ySelect.appendChild(opt);
         }
+
+        container.appendChild(div);
       });
     }
 
-    function toggleEdit(index) {
+    function toggleEdit(index, element) {
       const editDiv = document.getElementById(`edit-${index}`);
       editDiv.style.display = editDiv.style.display === 'block' ? 'none' : 'block';
     }
@@ -111,10 +111,15 @@
     }
 
     function addItem(type) {
+      const now = new Date();
+      const month = String(now.getMonth() + 1).padStart(2, '0');
+      const year = now.getFullYear();
+
       items.push({
         type: type,
-        date: new Date().toISOString().slice(0,10)  // data atual
+        date: `${year}-${month}-01`
       });
+
       saveItems();
     }
 
