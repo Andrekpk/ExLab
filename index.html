@@ -13,18 +13,16 @@
     h1 { color:#2563eb; font-size:1.8em; }
     .add-btn { position:absolute; top:20px; right:20px; background:#2563eb; color:white; width:48px; height:48px; border:none; border-radius:50%; font-size:32px; line-height:40px; cursor:pointer; box-shadow:0 4px 12px rgba(37,99,235,0.4); }
 
-    .pre-card { background:white; border-radius:16px; padding:18px; box-shadow:0 4px 12px rgba(0,0,0,0.08); margin-bottom:20px; cursor:pointer; }
-    .pre-card h3 { color:#1e2937; margin-bottom:6px; }
+    .card, .folder-card { background:white; border-radius:16px; padding:18px; box-shadow:0 4px 12px rgba(0,0,0,0.08); cursor:pointer; margin-bottom:15px; }
+    .card h3, .folder-card h3 { color:#1e2937; margin-bottom:6px; }
 
-    #months-grid { display:grid; grid-template-columns:repeat(auto-fit, minmax(260px,1fr)); gap:15px; }
-    .card { background:white; border-radius:16px; padding:18px; box-shadow:0 4px 12px rgba(0,0,0,0.08); cursor:pointer; }
-    .card h3 { color:#1e2937; margin-bottom:6px; }
+    #folder-view { display:none; }
+    #folder-grid { display:grid; grid-template-columns:repeat(auto-fit, minmax(120px,1fr)); gap:12px; }
+    .item { width:100%; aspect-ratio:1/1; border-radius:12px; overflow:hidden; border:1px solid #e2e8f0; background:#f8fafc; display:flex; align-items:center; justify-content:center; font-size:12px; text-align:center; }
 
     .modal { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.7); align-items:center; justify-content:center; z-index:1000; }
     .modal-content { background:white; width:90%; max-width:340px; border-radius:16px; padding:25px; text-align:center; }
-    .modal-content label { display:block; margin:15px 0 6px; text-align:left; font-weight:bold; }
-    .modal-content select, .modal-content input { width:100%; padding:12px; border-radius:10px; border:1px solid #cbd5e1; font-size:16px; }
-    .modal-content button { width:100%; padding:14px; margin:10px 0; border:none; border-radius:12px; font-size:16px; cursor:pointer; }
+    .modal-content button { width:100%; padding:14px; margin:8px 0; border:none; border-radius:12px; font-size:16px; cursor:pointer; }
     .primary-btn { background:#2563eb; color:white; }
   </style>
 </head>
@@ -35,15 +33,24 @@
     <button class="add-btn" onclick="showModal()">+</button>
   </header>
 
-  <!-- Card pré-criado -->
-  <div class="pre-card" onclick="alert('📂 Fevereiro 2026 - 0 itens\n\nClique para abrir a pasta')">
-    <h3>Fevereiro 2026</h3>
-    <p style="color:#64748b;">0 itens</p>
+  <!-- Tela principal -->
+  <div id="home-view">
+    <div class="card" onclick="openFolder('2026-02')">
+      <h3>Fevereiro 2026</h3>
+      <p style="color:#64748b;">0 itens</p>
+    </div>
+    <main id="months-grid"></main>
   </div>
 
-  <main id="months-grid"></main>
+  <!-- Tela da pasta aberta -->
+  <div id="folder-view">
+    <button onclick="backToHome()" style="margin-bottom:15px; background:none; border:none; color:#2563eb; font-size:18px;">← Voltar</button>
+    <h2 id="folder-title">Fevereiro 2026</h2>
+    <div id="folder-grid"></div>
+    <button onclick="addToCurrentFolder()" class="primary-btn" style="margin-top:20px;">+ Adicionar foto ou PDF</button>
+  </div>
 
-  <!-- Modal -->
+  <!-- Modal Nova Pasta -->
   <div id="modal" class="modal">
     <div class="modal-content">
       <h3>Nova Pasta</h3>
@@ -71,13 +78,14 @@
 
   <script>
     let exams = JSON.parse(localStorage.getItem('exams')) || {};
+    let currentFolderKey = null;
 
     function save() {
       localStorage.setItem('exams', JSON.stringify(exams));
-      render();
+      renderHome();
     }
 
-    function render() {
+    function renderHome() {
       const grid = document.getElementById('months-grid');
       grid.innerHTML = '';
 
@@ -89,9 +97,34 @@
         const card = document.createElement('div');
         card.className = 'card';
         card.innerHTML = `<h3>${monthName.charAt(0).toUpperCase() + monthName.slice(1)} ${year}</h3><p style="color:#64748b;">${count} itens</p>`;
-        card.onclick = () => alert(`📂 ${monthName} ${year} - ${count} itens`);
+        card.onclick = () => openFolder(key);
         grid.appendChild(card);
       });
+    }
+
+    function openFolder(key) {
+      currentFolderKey = key;
+      const [year, month] = key.split('-');
+      const monthName = new Date(year, month-1).toLocaleString('pt-BR', { month: 'long' });
+
+      document.getElementById('home-view').style.display = 'none';
+      document.getElementById('folder-view').style.display = 'block';
+      document.getElementById('folder-title').textContent = `${monthName.charAt(0).toUpperCase() + monthName.slice(1)} ${year}`;
+
+      const grid = document.getElementById('folder-grid');
+      grid.innerHTML = '';
+
+      (exams[key] || []).forEach(item => {
+        const div = document.createElement('div');
+        div.className = 'item';
+        div.innerHTML = item.type === 'pdf' ? '📄 PDF' : '📸 Foto';
+        grid.appendChild(div);
+      });
+    }
+
+    function backToHome() {
+      document.getElementById('folder-view').style.display = 'none';
+      document.getElementById('home-view').style.display = 'block';
     }
 
     function showModal() {
@@ -109,9 +142,19 @@
       if (!exams[key]) exams[key] = [];
       save();
       closeModal();
+      openFolder(key);   // abre direto a pasta criada
     }
 
-    render();
+    function addToCurrentFolder() {
+      if (!currentFolderKey) return;
+      const type = confirm('Adicionar PDF? (Cancelar = Foto)') ? 'pdf' : 'photo';
+      if (!exams[currentFolderKey]) exams[currentFolderKey] = [];
+      exams[currentFolderKey].push({ type, date: new Date().toLocaleDateString('pt-BR') });
+      save();
+      openFolder(currentFolderKey); // atualiza a tela
+    }
+
+    renderHome();
   </script>
 </body>
 </html>
