@@ -13,17 +13,7 @@
     h1 { color:#2563eb; font-size:1.9em; }
 
     .buttons { display:flex; flex-direction:column; gap:14px; margin:30px 0; }
-    .btn { 
-      padding:22px; 
-      font-size:18px; 
-      border-radius:16px; 
-      border:none; 
-      color:white; 
-      font-weight:600; 
-      cursor:pointer; 
-      box-shadow:0 4px 15px rgba(0,0,0,0.1); 
-      text-align:center;
-    }
+    .btn { padding:22px; font-size:18px; border-radius:16px; border:none; color:white; font-weight:600; cursor:pointer; box-shadow:0 4px 15px rgba(0,0,0,0.1); }
     .btn-photo { background:#ef4444; }
     .btn-gallery { background:#3b82f6; }
     .btn-pdf { background:#8b5cf6; }
@@ -35,6 +25,10 @@
     .item-icon img { width:100%; height:100%; object-fit:cover; }
     .item-info h3 { margin:0; font-size:1.1em; }
     .item-date { color:#2563eb; margin-top:6px; font-size:0.95em; cursor:pointer; text-decoration:underline; }
+
+    .edit-inline { margin-top:10px; display:none; background:#f1f5f9; padding:12px; border-radius:10px; }
+    .edit-inline select { width:48%; padding:10px; margin:5px 2%; border-radius:8px; border:1px solid #cbd5e1; }
+    .save-btn { background:#2563eb; color:white; border:none; padding:8px 16px; border-radius:8px; margin-top:8px; width:100%; }
   </style>
 </head>
 <body>
@@ -44,20 +38,9 @@
   </header>
 
   <div class="buttons">
-    <label class="btn btn-photo">
-      📸 Tirar Foto
-      <input type="file" id="camera-input" accept="image/*" capture="camera" style="display:none;">
-    </label>
-
-    <label class="btn btn-gallery">
-      🖼️ Carregar Imagem
-      <input type="file" id="gallery-input" accept="image/*" style="display:none;">
-    </label>
-
-    <label class="btn btn-pdf">
-      📄 Carregar PDF
-      <input type="file" id="pdf-input" accept=".pdf" style="display:none;">
-    </label>
+    <button class="btn btn-photo" onclick="addItem('photo')">📸 Tirar Foto</button>
+    <button class="btn btn-gallery" onclick="addItem('gallery')">🖼️ Carregar Imagem</button>
+    <button class="btn btn-pdf" onclick="addItem('pdf')">📄 Carregar PDF</button>
   </div>
 
   <div id="list" class="list"></div>
@@ -74,51 +57,81 @@
       const container = document.getElementById('list');
       container.innerHTML = '';
 
-      items.sort((a,b) => new Date(b.date) - new Date(a.date));
+      // Ordenação forte: mais recente primeiro (ano + mês)
+      items.sort((a, b) => {
+        return parseInt(b.date.replace('-','')) - parseInt(a.date.replace('-',''));
+      });
 
       items.forEach(item => {
+        const [year, month] = item.date.split('-');
+        const monthName = new Date(year, month-1).toLocaleString('pt-BR', { month: 'long', year: 'numeric' });
+
         const div = document.createElement('div');
         div.className = 'item';
-        const monthName = new Date(item.date).toLocaleString('pt-BR', { month: 'long', year: 'numeric' });
-
-        let iconHTML = item.type === 'pdf' ? '📄' : (item.preview ? `<img src="${item.preview}">` : '📸');
-
         div.innerHTML = `
           <div class="item-header">
-            <div class="item-icon">${iconHTML}</div>
+            <div class="item-icon">${item.type === 'pdf' ? '📄' : (item.preview ? `<img src="${item.preview}">` : '📸')}</div>
             <div class="item-info">
               <h3>${item.type === 'pdf' ? 'PDF' : 'Foto'}</h3>
-              <div class="item-date">${monthName}</div>
+              <div class="item-date" onclick="toggleEdit('${item.id}', this)">${monthName}</div>
             </div>
           </div>
+          <div class="edit-inline" id="edit-${item.id}">
+            <select id="m-${item.id}">
+              <option value="01">Janeiro</option><option value="02">Fevereiro</option>
+              <option value="03">Março</option><option value="04">Abril</option>
+              <option value="05">Maio</option><option value="06">Junho</option>
+              <option value="07">Julho</option><option value="08">Agosto</option>
+              <option value="09">Setembro</option><option value="10">Outubro</option>
+              <option value="11">Novembro</option><option value="12">Dezembro</option>
+            </select>
+            <select id="y-${item.id}"></select>
+            <button class="save-btn" onclick="saveEdit('${item.id}')">Salvar Data</button>
+          </div>
         `;
+
+        // Preenche anos
+        const ySelect = div.querySelector(`#y-${item.id}`);
+        for(let y=2000; y<=2035; y++) {
+          const opt = document.createElement('option');
+          opt.value = y;
+          opt.textContent = y;
+          if(y == year) opt.selected = true;
+          ySelect.appendChild(opt);
+        }
+
         container.appendChild(div);
       });
     }
 
-    // Handlers reais
-    document.getElementById('camera-input').onchange = e => handleFile(e.target.files[0], 'photo');
-    document.getElementById('gallery-input').onchange = e => handleFile(e.target.files[0], 'photo');
-    document.getElementById('pdf-input').onchange = e => handleFile(e.target.files[0], 'pdf');
+    function toggleEdit(id, element) {
+      const editDiv = document.getElementById(`edit-${id}`);
+      editDiv.style.display = editDiv.style.display === 'block' ? 'none' : 'block';
+    }
 
-    function handleFile(file, type) {
-      if (!file) return;
-
-      const reader = new FileReader();
-      reader.onload = function(ev) {
-        const now = new Date();
-        const month = String(now.getMonth() + 1).padStart(2, '0');
-        const year = now.getFullYear();
-
-        items.push({
-          type: type,
-          date: `${year}-${month}-01`,
-          preview: ev.target.result
-        });
-
+    function saveEdit(id) {
+      const month = document.getElementById(`m-${id}`).value;
+      const year = document.getElementById(`y-${id}`).value;
+      const item = items.find(i => i.id === id);
+      if (item) {
+        item.date = `${year}-${month}`;
         saveItems();
-      };
-      reader.readAsDataURL(file);
+      }
+    }
+
+    function addItem(type) {
+      const now = new Date();
+      const month = String(now.getMonth() + 1).padStart(2, '0');
+      const year = now.getFullYear();
+
+      items.push({
+        id: Date.now().toString(),
+        type: type,
+        date: `${year}-${month}`,
+        preview: null   // será preenchido quando tivermos foto real
+      });
+
+      saveItems();
     }
 
     renderList();
