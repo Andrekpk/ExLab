@@ -13,18 +13,7 @@
     h1 { color:#2563eb; font-size:1.9em; }
 
     .buttons { display:flex; flex-direction:column; gap:14px; margin:30px 0; }
-    .btn { 
-      padding:22px; 
-      font-size:18px; 
-      border-radius:16px; 
-      border:none; 
-      color:white; 
-      font-weight:600; 
-      cursor:pointer; 
-      box-shadow:0 4px 15px rgba(0,0,0,0.1); 
-      text-align:center;
-      display:block;
-    }
+    .btn { padding:22px; font-size:18px; border-radius:16px; border:none; color:white; font-weight:600; cursor:pointer; box-shadow:0 4px 15px rgba(0,0,0,0.1); }
     .btn-photo { background:#ef4444; }
     .btn-gallery { background:#3b82f6; }
     .btn-pdf { background:#8b5cf6; }
@@ -35,6 +24,7 @@
     .count { color:#64748b; margin-bottom:12px; }
     .thumbnails { display:flex; gap:6px; flex-wrap:wrap; margin-bottom:12px; }
     .thumb-small { width:45px; height:45px; border-radius:8px; overflow:hidden; border:1px solid #e2e8f0; }
+    .whatsapp-btn { background:#25D366; color:white; border:none; padding:14px; border-radius:12px; width:100%; font-size:16px; cursor:pointer; margin-top:10px; }
   </style>
 </head>
 <body>
@@ -44,23 +34,16 @@
   </header>
 
   <div class="buttons">
-    <label class="btn btn-photo">
-      📸 Tirar Foto
-      <input type="file" id="camera-input" accept="image/*" capture="camera" style="display:none;">
-    </label>
-
-    <label class="btn btn-gallery">
-      🖼️ Carregar Imagem
-      <input type="file" id="gallery-input" accept="image/*" style="display:none;">
-    </label>
-
-    <label class="btn btn-pdf">
-      📄 Carregar PDF
-      <input type="file" id="pdf-input" accept=".pdf" style="display:none;">
-    </label>
+    <button class="btn btn-photo" onclick="addItem('photo')">📸 Tirar Foto</button>
+    <button class="btn btn-gallery" onclick="addItem('gallery')">🖼️ Carregar Imagem</button>
+    <button class="btn btn-pdf" onclick="addItem('pdf')">📄 Carregar PDF</button>
   </div>
 
   <div id="months" class="months"></div>
+
+  <input type="file" id="camera" accept="image/*" capture="camera" style="display:none;">
+  <input type="file" id="gallery" accept="image/*" style="display:none;">
+  <input type="file" id="pdf" accept=".pdf" style="display:none;">
 
   <script>
     let items = JSON.parse(localStorage.getItem('exlab_items')) || [];
@@ -98,11 +81,34 @@
               </div>
             `).join('')}
           </div>
+          <button class="whatsapp-btn" onclick="shareMonth('${key}'); event.stopImmediatePropagation();">
+            Enviar por WhatsApp
+          </button>
         `;
-        card.onclick = () => alert(`📂 Abrindo ${monthName} - Em breve tela detalhada`);
+        card.onclick = () => alert(`📂 Abrindo ${monthName} (em breve tela detalhada)`);
         container.appendChild(card);
       });
     }
+
+    function shareMonth(key) {
+      const monthItems = items.filter(i => i.date.startsWith(key));
+      const [year, monthNum] = key.split('-');
+      const monthName = new Date(year, monthNum-1).toLocaleString('pt-BR', { month: 'long', year: 'numeric' });
+
+      const text = `📋 Meus exames de ${monthName}\nTotal: ${monthItems.length} arquivos\nEnviado pelo Ex Lab`;
+
+      const waLink = `https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`;
+      window.open(waLink, '_blank');
+    }
+
+    function addItem(type) {
+      const input = document.getElementById(type === 'pdf' ? 'pdf' : type === 'photo' ? 'camera' : 'gallery');
+      input.click();
+    }
+
+    document.getElementById('camera').onchange = e => handleFile(e.target.files[0], 'photo');
+    document.getElementById('gallery').onchange = e => handleFile(e.target.files[0], 'photo');
+    document.getElementById('pdf').onchange = e => handleFile(e.target.files[0], 'pdf');
 
     function handleFile(file, type) {
       if (!file) return;
@@ -122,11 +128,6 @@
       };
       reader.readAsDataURL(file);
     }
-
-    // Conecta os inputs
-    document.getElementById('camera-input').onchange = e => handleFile(e.target.files[0], 'photo');
-    document.getElementById('gallery-input').onchange = e => handleFile(e.target.files[0], 'photo');
-    document.getElementById('pdf-input').onchange = e => handleFile(e.target.files[0], 'pdf');
 
     renderHome();
   </script>
