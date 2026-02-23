@@ -19,7 +19,7 @@
     .btn-pdf { background:#8b5cf6; }
 
     .list { margin-top:10px; }
-    .item { background:white; border-radius:14px; padding:16px; margin-bottom:12px; box-shadow:0 3px 10px rgba(0,0,0,0.07); }
+    .item { background:white; border-radius:14px; padding:16px; margin-bottom:12px; box-shadow:0 3px 10px rgba(0,0,0,0.07); cursor:pointer; }
     .item-header { display:flex; align-items:center; gap:15px; }
     .item-icon { font-size:32px; width:50px; }
     .item-info h3 { margin:0; font-size:1.1em; }
@@ -56,12 +56,18 @@
       const container = document.getElementById('list');
       container.innerHTML = '';
 
-      items.sort((a,b) => new Date(b.date) - new Date(a.date));
+      // Ordenação forte: mais recente primeiro
+      items.sort((a, b) => {
+        const numA = parseInt(a.date.replace(/-/g, ''));
+        const numB = parseInt(b.date.replace(/-/g, ''));
+        return numB - numA;
+      });
 
       items.forEach((item, index) => {
         const div = document.createElement('div');
         div.className = 'item';
-        const monthName = new Date(item.date).toLocaleString('pt-BR', { month: 'long', year: 'numeric' });
+        const dateObj = new Date(item.date);
+        const monthName = dateObj.toLocaleString('pt-BR', { month: 'long', year: 'numeric' });
 
         div.innerHTML = `
           <div class="item-header">
@@ -85,12 +91,13 @@
           </div>
         `;
 
+        // Preenche anos
         const ySelect = div.querySelector(`#y-${index}`);
         for(let y=2000; y<=2035; y++) {
           const opt = document.createElement('option');
           opt.value = y;
           opt.textContent = y;
-          if(y === new Date(item.date).getFullYear()) opt.selected = true;
+          if(y === dateObj.getFullYear()) opt.selected = true;
           ySelect.appendChild(opt);
         }
 
