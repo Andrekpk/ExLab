@@ -96,4 +96,40 @@
           ySelect.appendChild(opt);
         }
 
-        container.appendChild(div
+        container.appendChild(div);
+      });
+    }
+
+    function toggleEdit(id, element) {
+      const editDiv = document.getElementById(`edit-${id}`);
+      editDiv.style.display = editDiv.style.display === 'block' ? 'none' : 'block';
+    }
+
+    function saveEdit(id) {
+      const item = items.find(i => i.id === id);
+      if (!item) return;
+
+      const month = document.getElementById(`m-${id}`).value;
+      const year = document.getElementById(`y-${id}`).value;
+      item.date = `${year}-${month}-01`;
+      saveItems();
+    }
+
+    function addItem(type) {
+      const now = new Date();
+      const month = String(now.getMonth() + 1).padStart(2, '0');
+      const year = now.getFullYear();
+
+      items.push({
+        id: Date.now().toString(),   // ID único
+        type: type,
+        date: `${year}-${month}-01`
+      });
+
+      saveItems();
+    }
+
+    renderList();
+  </script>
+</body>
+</html>
