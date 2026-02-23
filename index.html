@@ -24,7 +24,15 @@
     .count { color:#64748b; margin-bottom:12px; }
     .thumbnails { display:flex; gap:6px; flex-wrap:wrap; margin-bottom:12px; }
     .thumb-small { width:45px; height:45px; border-radius:8px; overflow:hidden; border:1px solid #e2e8f0; }
-    .whatsapp-btn { background:#25D366; color:white; border:none; padding:14px; border-radius:12px; width:100%; font-size:16px; cursor:pointer; margin-top:10px; }
+
+    /* Tela detalhada */
+    #detail-view { display:none; }
+    #detail-grid { display:grid; grid-template-columns:repeat(auto-fit, minmax(140px,1fr)); gap:12px; }
+    .detail-item { background:white; border-radius:14px; padding:8px; box-shadow:0 3px 10px rgba(0,0,0,0.08); position:relative; }
+    .detail-item .thumb { width:100%; aspect-ratio:1/1; border-radius:10px; overflow:hidden; cursor:pointer; }
+    .detail-item .thumb img { width:100%; height:100%; object-fit:cover; }
+    .detail-item .pdf-icon { width:100%; aspect-ratio:1/1; background:#f1f5f9; display:flex; align-items:center; justify-content:center; font-size:60px; border-radius:10px; }
+    .delete-x { position:absolute; top:8px; right:8px; background:rgba(239,68,68,0.85); color:white; width:24px; height:24px; border-radius:50%; border:none; font-size:14px; cursor:pointer; line-height:20px; }
   </style>
 </head>
 <body>
@@ -41,12 +49,20 @@
 
   <div id="months" class="months"></div>
 
+  <!-- Tela detalhada do mês -->
+  <div id="detail-view">
+    <button onclick="backToHome()" style="margin-bottom:15px; background:none; border:none; color:#2563eb; font-size:18px;">← Voltar</button>
+    <h2 id="detail-title"></h2>
+    <div id="detail-grid"></div>
+  </div>
+
   <input type="file" id="camera" accept="image/*" capture="camera" style="display:none;">
   <input type="file" id="gallery" accept="image/*" style="display:none;">
   <input type="file" id="pdf" accept=".pdf" style="display:none;">
 
   <script>
     let items = JSON.parse(localStorage.getItem('exlab_items')) || [];
+    let currentMonthKey = null;
 
     function save() {
       localStorage.setItem('exlab_items', JSON.stringify(items));
@@ -85,20 +101,73 @@
             Enviar por WhatsApp
           </button>
         `;
-        card.onclick = () => alert(`📂 Abrindo ${monthName} (em breve tela detalhada)`);
+        card.onclick = () => openMonth(key);
         container.appendChild(card);
       });
     }
 
-    function shareMonth(key) {
-      const monthItems = items.filter(i => i.date.startsWith(key));
+    function openMonth(key) {
+      currentMonthKey = key;
+      document.getElementById('home-view').style.display = 'none';
+      document.getElementById('detail-view').style.display = 'block';
+
       const [year, monthNum] = key.split('-');
       const monthName = new Date(year, monthNum-1).toLocaleString('pt-BR', { month: 'long', year: 'numeric' });
+      document.getElementById('detail-title').textContent = monthName;
 
-      const text = `📋 Meus exames de ${monthName}\nTotal: ${monthItems.length} arquivos\nEnviado pelo Ex Lab`;
+      const grid = document.getElementById('detail-grid');
+      grid.innerHTML = '';
 
-      const waLink = `https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`;
-      window.open(waLink, '_blank');
+      const monthItems = items.filter(i => i.date.startsWith(key));
+
+      monthItems.forEach(item => {
+        const div = document.createElement('div');
+        div.className = 'detail-item';
+        div.innerHTML = `
+          <button class="delete-x" onclick="deleteItem('${item.id}'); event.stopImmediatePropagation();">✕</button>
+          <div class="thumb" onclick="openFile('${item.id}')">
+            ${item.type === 'pdf' ? '<div class="pdf-icon">📄</div>' : (item.preview ? `<img src="${item.preview}">` : '📸')}
+          </div>
+        `;
+        grid.appendChild(div);
+      });
+    }
+
+    function openFile(id) {
+      const item = items.find(i => i.id === id);
+      if (!item) return;
+      if (item.type === 'pdf') {
+        window.open(item.preview, '_blank');
+      } else {
+        const modal = document.createElement('div');
+        modal.style.position = 'fixed';
+        modal.style.top = '0';
+        modal.style.left = '0';
+        modal.style.width = '100%';
+        modal.style.height = '100%';
+        modal.style.background = 'rgba(0,0,0,0.95)';
+        modal.style.display = 'flex';
+        modal.style.alignItems = 'center';
+        modal.style.justifyContent = 'center';
+        modal.style.zIndex = '9999';
+        modal.innerHTML = `<img src="${item.preview}" style="max-width:95%; max-height:95%;">`;
+        modal.onclick = () => modal.remove();
+        document.body.appendChild(modal);
+      }
+    }
+
+    function deleteItem(id) {
+      if (confirm('Excluir este arquivo?')) {
+        items = items.filter(i => i.id !== id);
+        save();
+        openMonth(currentMonthKey);
+      }
+    }
+
+    function backToHome() {
+      document.getElementById('detail-view').style.display = 'none';
+      document.getElementById('home-view').style.display = 'block';
+      renderHome();
     }
 
     function addItem(type) {
@@ -127,6 +196,16 @@
         save();
       };
       reader.readAsDataURL(file);
+    }
+
+    function shareMonth(key) {
+      const monthItems = items.filter(i => i.date.startsWith(key));
+      const [year, monthNum] = key.split('-');
+      const monthName = new Date(year, monthNum-1).toLocaleString('pt-BR', { month: 'long', year: 'numeric' });
+
+      const text = `📋 Meus exames de ${monthName}\nTotal: ${monthItems.length} arquivos\nEnviado pelo Ex Lab`;
+      const waLink = `https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`;
+      window.open(waLink, '_blank');
     }
 
     renderHome();
