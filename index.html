@@ -25,7 +25,7 @@
     .count { color:#64748b; margin-bottom:12px; }
     .thumbnails { display:flex; gap:6px; flex-wrap:wrap; margin-bottom:12px; }
     .thumb-small { width:45px; height:45px; border-radius:8px; overflow:hidden; border:1px solid #e2e8f0; }
-    .zip-btn { background:#FFCC00; color:#000; border:none; padding:14px; border-radius:12px; width:100%; font-size:16px; cursor:pointer; margin-top:10px; font-weight:bold; display:flex; align-items:center; justify-content:center; gap:8px; }
+    .zip-btn { background:#FFCC00; color:#000; border:none; padding:14px; border-radius:12px; width:100%; font-size:16px; cursor:pointer; margin-top:10px; font-weight:bold; }
   </style>
 </head>
 <body>
@@ -90,7 +90,7 @@
         container.appendChild(card);
       });
 
-      // Adiciona listeners depois de criar todos os botões (corrige o problema)
+      // Listeners para todos os botões ZIP (corrige o problema de só funcionar no primeiro mês)
       document.querySelectorAll('.zip-btn').forEach(btn => {
         btn.addEventListener('click', (e) => {
           e.stopImmediatePropagation();
@@ -118,6 +118,7 @@
 
       const zip = new JSZip();
       monthItems.forEach((item, index) => {
+        if (!item.preview) return;
         const ext = item.type === 'pdf' ? '.pdf' : '.jpg';
         const filename = `${index+1} - ${item.type === 'pdf' ? 'PDF' : 'Foto'}${ext}`;
         zip.file(filename, item.preview.split(',')[1], {base64: true});
