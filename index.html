@@ -90,7 +90,6 @@
         container.appendChild(card);
       });
 
-      // Listeners para todos os botões ZIP (corrige o problema de só funcionar no primeiro mês)
       document.querySelectorAll('.zip-btn').forEach(btn => {
         btn.addEventListener('click', (e) => {
           e.stopImmediatePropagation();
@@ -133,7 +132,7 @@
       URL.revokeObjectURL(url);
 
       loading.remove();
-      alert('✅ ZIP baixado!\n\nAbra o arquivo e envie pelo WhatsApp.');
+      // Sem alerta - só baixa silenciosamente
     }
 
     function addItem(type) {
