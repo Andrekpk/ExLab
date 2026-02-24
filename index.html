@@ -20,12 +20,12 @@
     .btn-pdf { background:#8b5cf6; }
 
     .months { display:grid; grid-template-columns:repeat(auto-fit, minmax(280px,1fr)); gap:15px; margin-top:20px; }
-    .month-card { background:white; border-radius:16px; padding:18px; box-shadow:0 4px 12px rgba(0,0,0,0.08); }
+    .month-card { background:white; border-radius:16px; padding:18px; box-shadow:0 4px 12px rgba(0,0,0,0.08); cursor:pointer; }
     .month-card h3 { color:#1e2937; margin-bottom:8px; }
     .count { color:#64748b; margin-bottom:12px; }
     .thumbnails { display:flex; gap:6px; flex-wrap:wrap; margin-bottom:12px; }
     .thumb-small { width:45px; height:45px; border-radius:8px; overflow:hidden; border:1px solid #e2e8f0; }
-    .whatsapp-btn, .zip-btn { background:#25D366; color:white; border:none; padding:14px; border-radius:12px; width:100%; font-size:16px; cursor:pointer; margin-top:10px; }
+    .zip-btn { background:#FFCC00; color:#000; border:none; padding:14px; border-radius:12px; width:100%; font-size:16px; cursor:pointer; margin-top:10px; font-weight:bold; display:flex; align-items:center; justify-content:center; gap:8px; }
   </style>
 </head>
 <body>
@@ -82,26 +82,13 @@
               </div>
             `).join('')}
           </div>
-          <button class="whatsapp-btn" onclick="shareMonth('${key}'); event.stopImmediatePropagation();">
-            Enviar por WhatsApp
-          </button>
           <button class="zip-btn" onclick="downloadMonthZIP('${key}'); event.stopImmediatePropagation();">
-            Baixar ZIP do mês
+            🗜 Baixar ZIP do mês
           </button>
         `;
-        card.onclick = () => openMonth(key);
+        card.onclick = () => alert(`📂 Abrindo ${monthName} (em breve tela detalhada)`);
         container.appendChild(card);
       });
-    }
-
-    function shareMonth(key) {
-      const monthItems = items.filter(i => i.date.startsWith(key));
-      const [year, monthNum] = key.split('-');
-      const monthName = new Date(year, monthNum-1).toLocaleString('pt-BR', { month: 'long', year: 'numeric' });
-
-      const text = `📋 Meus exames de ${monthName}\nTotal: ${monthItems.length} arquivos\nEnviado pelo Ex Lab`;
-      const waLink = `https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`;
-      window.open(waLink, '_blank');
     }
 
     async function downloadMonthZIP(key) {
@@ -121,10 +108,7 @@
       a.href = url;
       a.download = `Exames-${key}.zip`;
       a.click();
-    }
-
-    function openMonth(key) {
-      alert(`📂 Abrindo ${key} - Em breve tela detalhada com thumbnails maiores`);
+      URL.revokeObjectURL(url);
     }
 
     function addItem(type) {
