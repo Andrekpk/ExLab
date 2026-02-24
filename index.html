@@ -26,6 +26,15 @@
     .thumbnails { display:flex; gap:6px; flex-wrap:wrap; margin-bottom:12px; }
     .thumb-small { width:45px; height:45px; border-radius:8px; overflow:hidden; border:1px solid #e2e8f0; }
     .zip-btn { background:#FFCC00; color:#000; border:none; padding:14px; border-radius:12px; width:100%; font-size:16px; cursor:pointer; margin-top:10px; font-weight:bold; }
+
+    /* Tela detalhada */
+    #detail-view { display:none; }
+    #detail-grid { display:grid; grid-template-columns:repeat(auto-fit, minmax(140px,1fr)); gap:12px; }
+    .detail-item { background:white; border-radius:14px; padding:8px; box-shadow:0 3px 10px rgba(0,0,0,0.08); position:relative; }
+    .detail-item .thumb { width:100%; aspect-ratio:1/1; border-radius:10px; overflow:hidden; cursor:pointer; }
+    .detail-item .thumb img { width:100%; height:100%; object-fit:cover; }
+    .detail-item .pdf-icon { width:100%; aspect-ratio:1/1; background:#f1f5f9; display:flex; align-items:center; justify-content:center; font-size:60px; border-radius:10px; }
+    .delete-x { position:absolute; top:8px; right:8px; background:#ef4444; color:white; width:26px; height:26px; border-radius:50%; border:none; font-size:16px; cursor:pointer; line-height:22px; opacity:0.9; }
   </style>
 </head>
 <body>
@@ -40,7 +49,16 @@
     <button class="btn btn-pdf" onclick="addItem('pdf')">📄 Carregar PDF</button>
   </div>
 
-  <div id="months" class="months"></div>
+  <div id="home-view">
+    <div id="months" class="months"></div>
+  </div>
+
+  <!-- Tela detalhada do mês -->
+  <div id="detail-view">
+    <button onclick="backToHome()" style="margin-bottom:15px; background:none; border:none; color:#2563eb; font-size:18px;">← Voltar</button>
+    <h2 id="detail-title"></h2>
+    <div id="detail-grid"></div>
+  </div>
 
   <input type="file" id="camera" accept="image/*" capture="camera" style="display:none;">
   <input type="file" id="gallery" accept="image/*" style="display:none;">
@@ -48,6 +66,7 @@
 
   <script>
     let items = JSON.parse(localStorage.getItem('exlab_items')) || [];
+    let currentMonthKey = null;
 
     function save() {
       localStorage.setItem('exlab_items', JSON.stringify(items));
@@ -86,7 +105,7 @@
             🗜 Baixar ZIP do mês
           </button>
         `;
-        card.onclick = () => alert(`📂 Abrindo ${monthName} (em breve tela detalhada)`);
+        card.onclick = () => openMonth(key);
         container.appendChild(card);
       });
 
@@ -98,41 +117,68 @@
       });
     }
 
-    async function downloadMonthZIP(key) {
+    function openMonth(key) {
+      currentMonthKey = key;
+      document.getElementById('home-view').style.display = 'none';
+      document.getElementById('detail-view').style.display = 'block';
+
+      const [year, monthNum] = key.split('-');
+      const monthName = new Date(year, monthNum-1).toLocaleString('pt-BR', { month: 'long', year: 'numeric' });
+      document.getElementById('detail-title').textContent = monthName;
+
+      const grid = document.getElementById('detail-grid');
+      grid.innerHTML = '';
+
       const monthItems = items.filter(i => i.date.startsWith(key));
-      if (monthItems.length === 0) return alert('Nenhum arquivo neste mês.');
 
-      const loading = document.createElement('div');
-      loading.style.position = 'fixed';
-      loading.style.top = '50%';
-      loading.style.left = '50%';
-      loading.style.transform = 'translate(-50%, -50%)';
-      loading.style.background = 'rgba(0,0,0,0.8)';
-      loading.style.color = 'white';
-      loading.style.padding = '20px 30px';
-      loading.style.borderRadius = '12px';
-      loading.style.zIndex = '9999';
-      loading.textContent = 'Gerando ZIP...';
-      document.body.appendChild(loading);
-
-      const zip = new JSZip();
-      monthItems.forEach((item, index) => {
-        if (!item.preview) return;
-        const ext = item.type === 'pdf' ? '.pdf' : '.jpg';
-        const filename = `${index+1} - ${item.type === 'pdf' ? 'PDF' : 'Foto'}${ext}`;
-        zip.file(filename, item.preview.split(',')[1], {base64: true});
+      monthItems.forEach(item => {
+        const div = document.createElement('div');
+        div.className = 'detail-item';
+        div.innerHTML = `
+          <button class="delete-x" onclick="deleteItem('${item.id}'); event.stopImmediatePropagation();">✕</button>
+          <div class="thumb" onclick="openFile('${item.id}')">
+            ${item.type === 'pdf' ? '<div class="pdf-icon">📄</div>' : (item.preview ? `<img src="${item.preview}">` : '📸')}
+          </div>
+        `;
+        grid.appendChild(div);
       });
+    }
 
-      const blob = await zip.generateAsync({type:"blob"});
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `Exames-${key}.zip`;
-      a.click();
-      URL.revokeObjectURL(url);
+    function openFile(id) {
+      const item = items.find(i => i.id === id);
+      if (!item) return;
+      if (item.type === 'pdf') {
+        window.open(item.preview, '_blank');
+      } else {
+        const modal = document.createElement('div');
+        modal.style.position = 'fixed';
+        modal.style.top = '0';
+        modal.style.left = '0';
+        modal.style.width = '100%';
+        modal.style.height = '100%';
+        modal.style.background = 'rgba(0,0,0,0.95)';
+        modal.style.display = 'flex';
+        modal.style.alignItems = 'center';
+        modal.style.justifyContent = 'center';
+        modal.style.zIndex = '9999';
+        modal.innerHTML = `<img src="${item.preview}" style="max-width:95%; max-height:95%;">`;
+        modal.onclick = () => modal.remove();
+        document.body.appendChild(modal);
+      }
+    }
 
-      loading.remove();
-      // Sem alerta - só baixa silenciosamente
+    function deleteItem(id) {
+      if (confirm('Excluir este arquivo?')) {
+        items = items.filter(i => i.id !== id);
+        save();
+        openMonth(currentMonthKey);
+      }
+    }
+
+    function backToHome() {
+      document.getElementById('detail-view').style.display = 'none';
+      document.getElementById('home-view').style.display = 'block';
+      renderHome();
     }
 
     function addItem(type) {
@@ -161,6 +207,42 @@
         save();
       };
       reader.readAsDataURL(file);
+    }
+
+    function downloadMonthZIP(key) {
+      const monthItems = items.filter(i => i.date.startsWith(key));
+      if (monthItems.length === 0) return alert('Nenhum arquivo neste mês.');
+
+      const loading = document.createElement('div');
+      loading.style.position = 'fixed';
+      loading.style.top = '50%';
+      loading.style.left = '50%';
+      loading.style.transform = 'translate(-50%, -50%)';
+      loading.style.background = 'rgba(0,0,0,0.8)';
+      loading.style.color = 'white';
+      loading.style.padding = '20px 30px';
+      loading.style.borderRadius = '12px';
+      loading.style.zIndex = '9999';
+      loading.textContent = 'Gerando ZIP...';
+      document.body.appendChild(loading);
+
+      const zip = new JSZip();
+      monthItems.forEach((item, index) => {
+        if (!item.preview) return;
+        const ext = item.type === 'pdf' ? '.pdf' : '.jpg';
+        const filename = `${index+1} - ${item.type === 'pdf' ? 'PDF' : 'Foto'}${ext}`;
+        zip.file(filename, item.preview.split(',')[1], {base64: true});
+      });
+
+      zip.generateAsync({type:"blob"}).then(blob => {
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `Exames-${key}.zip`;
+        a.click();
+        URL.revokeObjectURL(url);
+        loading.remove();
+      });
     }
 
     renderHome();
