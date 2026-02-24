@@ -95,6 +95,19 @@
       const monthItems = items.filter(i => i.date.startsWith(key));
       if (monthItems.length === 0) return alert('Nenhum arquivo neste mês.');
 
+      const loading = document.createElement('div');
+      loading.style.position = 'fixed';
+      loading.style.top = '50%';
+      loading.style.left = '50%';
+      loading.style.transform = 'translate(-50%, -50%)';
+      loading.style.background = 'rgba(0,0,0,0.8)';
+      loading.style.color = 'white';
+      loading.style.padding = '20px 30px';
+      loading.style.borderRadius = '12px';
+      loading.style.zIndex = '9999';
+      loading.textContent = 'Gerando ZIP...';
+      document.body.appendChild(loading);
+
       const zip = new JSZip();
       monthItems.forEach((item, index) => {
         const ext = item.type === 'pdf' ? '.pdf' : '.jpg';
@@ -109,6 +122,9 @@
       a.download = `Exames-${key}.zip`;
       a.click();
       URL.revokeObjectURL(url);
+
+      loading.remove();
+      alert('✅ ZIP baixado!\n\nAgora abra o arquivo e envie pelo WhatsApp.');
     }
 
     function addItem(type) {
